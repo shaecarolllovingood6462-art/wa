@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>말글마을 탐험대: 전설의 황금 보물을 찾아서</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Google Fonts: Gaegu (Comic/Doodle), Jua (Chubby Game Heading), Noto Sans KR -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Jua&family=Noto+Sans+KR:wght@500;700;800;900&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            comic: ['Gaegu', 'cursive'],
+            jua: ['Jua', 'cursive', 'sans-serif'],
+            sans: ['"Noto Sans KR"', 'sans-serif'],
+          },
+          colors: {
+            toon: {
+              yellow: '#FFDF00',
+              cream: '#FFF9E6',
+              mint: '#4ECCA3',
+              pink: '#FF7597',
+              sky: '#5BC0EB',
+              orange: '#FDE24F',
+              wood: '#845EC2',
+              dark: '#2C3A47'
+            }
+          },
+          boxShadow: {
+            'pop': '4px 4px 0px #1e293b',
+            'pop-lg': '6px 6px 0px #1e293b',
+            'pop-xl': '8px 8px 0px #1e293b',
+            'pop-sm': '2px 2px 0px #1e293b',
+          },
+          keyframes: {
+            wobble: {
+              '0%, 100%': { transform: 'rotate(-2deg)' },
+              '50%': { transform: 'rotate(2deg)' },
+            },
+            jiggle: {
+              '0%, 100%': { transform: 'scale(1) translateY(0)' },
+              '50%': { transform: 'scale(1.06) translateY(-4px)' }
+            },
+            floatSlow: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-10px)' }
+            }
+          },
+          animation: {
+            wobble: 'wobble 2.5s ease-in-out infinite',
+            jiggle: 'jiggle 1.8s ease-in-out infinite',
+            floatSlow: 'floatSlow 3s ease-in-out infinite'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      background-color: #FFFDF0;
+      background-image: radial-gradient(#F6D860 1.2px, transparent 1.2px);
+      background-size: 24px 24px;
+    }
+    .font-jua { font-family: 'Jua', cursive, sans-serif; }
+    .font-comic { font-family: 'Gaegu', cursive; }
+
+    /* Comic border utility */
+    .comic-box {
+      border: 3.5px solid #1E293B;
+      box-shadow: 5px 5px 0px #1E293B;
+    }
+    .comic-btn {
+      border: 3px solid #1E293B;
+      box-shadow: 4px 4px 0px #1E293B;
+      transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .comic-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0px #1E293B;
+    }
+    .comic-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #1E293B;
+    }
+
+    /* Sticker Pin Bounce */
+    .pin-sticker {
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .pin-sticker:hover {
+      transform: scale(1.15) rotate(3deg);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between text-slate-800">
+
+  <!-- TOP COMIC BANNER -->
+  <header class="bg-amber-400 border-b-4 border-slate-900 sticky top-0 z-40 px-3 py-2 shadow-md">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <!-- Title & Home -->
+      <div class="flex items-center space-x-2 cursor-pointer" onclick="goToHome()">
+        <span class="text-3xl filter drop-shadow animate-bounce">🏕️</span>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-jua tracking-wide text-slate-900 flex items-center gap-1.5">
+            말글마을 탐험대 
+            <span class="bg-rose-500 text-white text-[11px] px-2 py-0.5 rounded-full border-2 border-slate-900 font-sans font-black shadow-pop-sm">
+              중1 국어
+            </span>
+          </h1>
+          <p class="text-[11px] font-bold text-slate-800 hidden sm:block">단어의 짜임 ★ 새말의 원리 ★ 어휘의 양상과 쓰임</p>
+        </div>
+      </div>
+
+      <!-- Inventory Badges -->
+      <div class="flex items-center gap-2 bg-white px-3 py-1 rounded-2xl border-3 border-slate-900 shadow-pop-sm">
+        <span class="text-xs font-black text-slate-800">🗝️ 열쇠:</span>
+        <span id="key1-badge" class="px-2 py-0.5 bg-slate-200 text-slate-600 rounded-xl text-xs font-jua border-2 border-slate-900">숲 [?]</span>
+        <span id="key2-badge" class="px-2 py-0.5 bg-slate-200 text-slate-600 rounded-xl text-xs font-jua border-2 border-slate-900">샘터 [?]</span>
+        <span id="key3-badge" class="px-2 py-0.5 bg-slate-200 text-slate-600 rounded-xl text-xs font-jua border-2 border-slate-900">장터 [?]</span>
+      </div>
+
+      <!-- Right Controls -->
+      <div class="flex items-center gap-2">
+        <div class="flex items-center bg-sky-200 px-3 py-1 rounded-xl text-slate-900 text-xs sm:text-sm font-jua border-2 border-slate-900 shadow-pop-sm">
+          <span class="mr-1">⏰</span>
+          <span id="class-timer">45:00</span>
+        </div>
+        <button id="audio-toggle" onclick="toggleAudio()" class="w-9 h-9 bg-yellow-300 rounded-xl border-2 border-slate-900 shadow-pop-sm font-bold flex items-center justify-center hover:bg-yellow-200">
+          🔊
+        </button>
+        <button onclick="openHelpModal()" class="px-3 py-1 bg-emerald-300 text-slate-900 rounded-xl font-jua text-xs sm:text-sm border-2 border-slate-900 shadow-pop-sm hover:bg-emerald-200">
+          도움말 💡
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl w-full mx-auto p-3 sm:p-5 flex-1 flex flex-col justify-center">
+
+    <!-- ================= SCREEN 1: INTRO (Cute Comic Cover) ================= -->
+    <section id="screen-intro" class="text-center py-6 max-w-2xl mx-auto flex flex-col items-center">
+      <div class="relative mb-3">
+        <!-- Cute Mascot Sticker -->
+        <div class="w-36 h-36 sm:w-44 sm:h-44 rounded-full bg-amber-300 border-4 border-slate-900 flex items-center justify-center shadow-pop-lg animate-wobble relative">
+          <span class="text-7xl">🧝‍♂️</span>
+          <span class="absolute -top-2 -right-1 text-4xl animate-bounce">✨</span>
+          <span class="absolute -bottom-2 -left-2 bg-rose-400 text-white text-xs px-2.5 py-1 rounded-full border-2 border-slate-900 font-jua shadow-pop-sm">
+            안내 요정 글또
+          </span>
+        </div>
+      </div>
+
+      <div class="bg-white px-4 py-2 rounded-2xl border-3 border-slate-900 shadow-pop mb-3 rotate-[-1deg]">
+        <h2 class="text-2xl sm:text-3xl font-jua text-slate-900">
+          말글마을의 사라진 황금 보물을 찾아라! 👑
+        </h2>
+      </div>
+
+      <div class="bg-yellow-100 p-4 rounded-3xl border-3 border-slate-900 shadow-pop mb-5 text-slate-800 text-sm sm:text-base leading-relaxed text-left relative">
+        <p class="font-comic text-xl text-slate-900 font-bold mb-1">
+          "앗, 큰일이야! 말썽꾸러기 도깨비가 어휘 마법으로 보물 금고를 꽁꽁 잠가버렸어!"
+        </p>
+        <p class="text-xs sm:text-sm text-slate-700">
+          1구역 <b>쪼개기 숲(단어의 짜임)</b>, 2구역 <b>반짝이는 샘터(새말의 원리)</b>, 3구역 <b>왁자지껄 장터(세대·매체·분야별 어휘)</b>의 총 <b>9개 퀘스트</b>를 풀고 세 개의 황금 열쇠 조각을 모아 보물 금고를 열어줘!
+        </p>
+      </div>
+
+      <!-- Player Name Box -->
+      <div class="bg-white p-4 sm:p-5 rounded-3xl border-3 border-slate-900 shadow-pop w-full mb-4 text-left">
+        <label for="student-name" class="block font-jua text-slate-800 mb-1.5 text-base flex items-center gap-1">
+          <span>🎒</span> 탐험대원 이름 (또는 모둠 이름)
+        </label>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <input type="text" id="student-name" placeholder="예: 1학년 2반 1조 / 탐험가 민지" 
+                 class="w-full px-4 py-2.5 rounded-2xl border-3 border-slate-900 font-bold text-sm bg-yellow-50 focus:outline-none focus:bg-white">
+          <button onclick="startAdventure()" class="comic-btn px-6 py-2.5 bg-emerald-400 hover:bg-emerald-300 text-slate-900 font-jua text-lg rounded-2xl whitespace-nowrap">
+            탐험 시작! 🚀
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SCREEN 2: VILLAGE MAP (Comic Style) ================= -->
+    <section id="screen-map" class="hidden flex-col items-center">
+      <div class="w-full flex justify-between items-center mb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-3xl">🗺️</span>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-jua text-slate-900">말글마을 모험 지도</h2>
+            <p class="text-xs font-bold text-slate-600">가고 싶은 구역을 눌러 탐험을 시작하세요!</p>
+          </div>
+        </div>
+        <div class="bg-amber-200 px-3 py-1 rounded-2xl border-2 border-slate-900 shadow-pop-sm text-xs font-jua">
+          대원: <span id="display-explorer-name" class="text-rose-600 font-black">탐험가</span>
+        </div>
+      </div>
+
+      <!-- Interactive Cartoon Map Container -->
+      <div class="relative w-full aspect-[16/10] sm:aspect-[16/9] max-h-[560px] bg-sky-200 rounded-3xl overflow-hidden border-4 border-slate-900 shadow-pop-xl">
+        
+        <!-- SVG Backdrop: Hills, Cartoon Path, Clouds -->
+        <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 900 550" preserveAspectRatio="none">
+          <!-- Sky Clouds -->
+          <g fill="#FFFFFF" opacity="0.9">
+            <ellipse cx="140" cy="80" rx="60" ry="25"/>
+            <ellipse cx="170" cy="70" rx="40" ry="25"/>
+            <ellipse cx="720" cy="80" rx="70" ry="25"/>
+            <ellipse cx="760" cy="70" rx="45" ry="22"/>
+          </g>
+
+          <!-- Green Cartoon Hills -->
+          <path d="M-50,550 Q200,250 480,550 Z" fill="#86efac" stroke="#1E293B" stroke-width="4"/>
+          <path d="M300,550 Q600,210 950,550 Z" fill="#4ade80" stroke="#1E293B" stroke-width="4"/>
+          <path d="M-20,550 Q450,330 920,550 Z" fill="#22c55e" stroke="#1E293B" stroke-width="4"/>
+
+          <!-- River -->
+          <path d="M0,160 Q320,180 470,300 T900,340" fill="none" stroke="#38bdf8" stroke-width="50" stroke-linecap="round"/>
+          <path d="M0,160 Q320,180 470,300 T900,340" fill="none" stroke="#bae6fd" stroke-width="12" stroke-linecap="round" stroke-dasharray="14 14"/>
+
+          <!-- Winding Dotted Road -->
+          <path d="M170,410 Q280,480 370,400 T500,250 T730,410" fill="none" stroke="#fde047" stroke-width="18" stroke-linecap="round"/>
+          <path d="M170,410 Q280,480 370,400 T500,250 T730,410" fill="none" stroke="#ca8a04" stroke-width="4" stroke-dasharray="8 8"/>
+          <path d="M500,250 L750,150" fill="none" stroke="#fde047" stroke-width="14" stroke-linecap="round"/>
+        </svg>
+
+        <!-- ZONE 1 PIN: 쪼개기 숲 -->
+        <div id="pin-zone1" onclick="openZone(1)" class="pin-sticker absolute left-[16%] top-[65%] -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 text-center">
+          <div class="relative inline-block">
+            <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-emerald-400 border-4 border-slate-900 shadow-pop flex items-center justify-center text-4xl">
+              🌲
+            </div>
+            <div id="badge-status-1" class="absolute -top-3 -right-3 bg-amber-300 text-slate-900 font-jua text-xs px-2.5 py-1 rounded-full border-2 border-slate-900 shadow-pop-sm">
+              미완료
+            </div>
+          </div>
+          <div class="bg-white px-3 py-1 rounded-2xl border-2 border-slate-900 shadow-pop-sm mt-1 font-jua text-xs sm:text-sm text-slate-900">
+            1. 쪼개기 숲<br><span class="text-[10px] text-emerald-700 font-sans font-bold">단어의 짜임 (3문제)</span>
+          </div>
+        </div>
+
+        <!-- ZONE 2 PIN: 반짝이는 샘터 -->
+        <div id="pin-zone2" onclick="openZone(2)" class="pin-sticker absolute left-[50%] top-[34%] -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 text-center">
+          <div class="relative inline-block">
+            <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-sky-300 border-4 border-slate-900 shadow-pop flex items-center justify-center text-4xl">
+              ✨
+            </div>
+            <div id="badge-status-2" class="absolute -top-3 -right-3 bg-amber-300 text-slate-900 font-jua text-xs px-2.5 py-1 rounded-full border-2 border-slate-900 shadow-pop-sm">
+              미완료
+            </div>
+          </div>
+          <div class="bg-white px-3 py-1 rounded-2xl border-2 border-slate-900 shadow-pop-sm mt-1 font-jua text-xs sm:text-sm text-slate-900">
+            2. 반짝이는 샘터<br><span class="text-[10px] text-sky-700 font-sans font-bold">새말의 원리 (3문제)</span>
+          </div>
+        </div>
+
+        <!-- ZONE 3 PIN: 왁자지껄 장터 -->
+        <div id="pin-zone3" onclick="openZone(3)" class="pin-sticker absolute left-[80%] top-[65%] -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 text-center">
+          <div class="relative inline-block">
+            <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-rose-300 border-4 border-slate-900 shadow-pop flex items-center justify-center text-4xl">
+              🏮
+            </div>
+            <div id="badge-status-3" class="absolute -top-3 -right-3 bg-amber-300 text-slate-900 font-jua text-xs px-2.5 py-1 rounded-full border-2 border-slate-900 shadow-pop-sm">
+              미완료
+            </div>
+          </div>
+          <div class="bg-white px-3 py-1 rounded-2xl border-2 border-slate-900 shadow-pop-sm mt-1 font-jua text-xs sm:text-sm text-slate-900">
+            3. 왁자지껄 장터<br><span class="text-[10px] text-rose-700 font-sans font-bold">세대·매체·분야 (3문제)</span>
+          </div>
+        </div>
+
+        <!-- ZONE 4 PIN: 황금 보물 금고 -->
+        <div id="pin-zone4" onclick="openVault()" class="pin-sticker absolute left-[78%] top-[20%] -translate-x-1/2 -translate-y-1/2 cursor-pointer z-20 text-center">
+          <div class="relative inline-block animate-jiggle">
+            <div id="vault-pin-box" class="w-16 h-16 sm:w-22 sm:h-22 rounded-3xl bg-amber-400 border-4 border-slate-900 shadow-pop flex items-center justify-center text-4xl sm:text-5xl">
+              🔒
+            </div>
+            <div class="absolute -bottom-2 -right-2 bg-yellow-300 text-slate-900 font-jua text-xs px-2 py-0.5 rounded-full border-2 border-slate-900 shadow-pop-sm">
+              최종 금고
+            </div>
+          </div>
+          <div class="bg-slate-900 text-yellow-300 px-3 py-1 rounded-2xl border-2 border-yellow-300 shadow-pop-sm mt-1 font-jua text-xs sm:text-sm">
+            👑 황금 보물 상자
+          </div>
+        </div>
+
+        <!-- Guide Talk Bubble -->
+        <div class="absolute bottom-3 left-3 bg-white/95 rounded-2xl border-3 border-slate-900 p-2.5 shadow-pop flex items-center gap-2 max-w-[280px]">
+          <span class="text-3xl shrink-0">🧝‍♂️</span>
+          <p class="text-[11px] font-bold text-slate-800 leading-tight">
+            <b>글또의 팁:</b> 세 구역에서 각각 3문제를 모두 풀면 열쇠 글자 1개씩(총 3개)을 얻을 수 있어!
+          </p>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="mt-4 flex flex-wrap gap-2 justify-center">
+        <button onclick="openZone(1)" class="comic-btn px-4 py-2 bg-emerald-400 text-slate-900 font-jua rounded-2xl text-sm">
+          🌲 1구역: 쪼개기 숲
+        </button>
+        <button onclick="openZone(2)" class="comic-btn px-4 py-2 bg-sky-300 text-slate-900 font-jua rounded-2xl text-sm">
+          ✨ 2구역: 반짝이는 샘터
+        </button>
+        <button onclick="openZone(3)" class="comic-btn px-4 py-2 bg-rose-300 text-slate-900 font-jua rounded-2xl text-sm">
+          🏮 3구역: 왁자지껄 장터
+        </button>
+        <button onclick="openVault()" class="comic-btn px-4 py-2 bg-amber-400 text-slate-900 font-jua rounded-2xl text-sm">
+          👑 비밀 금고 열기
+        </button>
+      </div>
+    </section>
+
+    <!-- ================= SCREEN 3: ZONE 1 QUEST (단어의 짜임) ================= -->
+    <section id="screen-zone1" class="hidden flex-col">
+      <div class="comic-box bg-white rounded-3xl p-5 sm:p-7 max-w-3xl mx-auto w-full">
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b-3 border-slate-900 pb-3 mb-4">
+          <div class="flex items-center gap-3">
+            <span class="text-4xl p-2 bg-emerald-200 rounded-2xl border-2 border-slate-900 shadow-pop-sm">🌲</span>
+            <div>
+              <span class="text-xs font-black text-emerald-800 uppercase tracking-wider">Zone 1 퀘스트</span>
+              <h2 class="text-2xl font-jua text-slate-900">쪼개기 숲: 단어의 짜임 마법</h2>
+            </div>
+          </div>
+          <button onclick="goToMap()" class="comic-btn px-3 py-1.5 bg-yellow-200 text-slate-900 rounded-xl text-xs font-jua">
+            🗺️ 지도로 나가기
+          </button>
+        </div>
+
+        <!-- Concept Bubble -->
+        <div class="bg-emerald-100 rounded-2xl p-4 mb-5 border-3 border-slate-900 shadow-pop-sm text-xs sm:text-sm text-slate-900">
+          <h4 class="font-jua text-base flex items-center gap-1 mb-1.5 text-emerald-950">
+            <span>💡</span> 글또의 핵심 족집게 노트:
+          </h4>
+          <ul class="space-y-1 list-disc pl-5 font-medium">
+            <li><b>단일어</b>: 하나의 어근(실질적인 뜻을 가진 중심 부분)으로만 된 단어 (예: 하늘, 나무, 바다)</li>
+            <li><b>합성어</b>: 둘 이상의 어근이 결합한 단어 (예: 돌다리 = 돌 + 다리, 눈웃음 = 눈 + 웃음)</li>
+            <li><b>파생어</b>: 어근에 접사(뜻을 더하거나 품사를 바꾸는 주변 부분)가 붙은 단어 (예: 맨발 = 맨- + 발, 풋사과 = 풋- + 사과)</li>
+          </ul>
+        </div>
+
+        <!-- Q1-1: Odd one out -->
+        <div class="mb-5 bg-yellow-50 p-4 rounded-2xl border-3 border-slate-900 shadow-pop-sm">
+          <span class="inline-block bg-emerald-500 text-white font-jua text-xs px-2.5 py-0.5 rounded-full border-2 border-slate-900 mb-2">
+            문제 1 ★ 성격이 다른 하나 찾기
+          </span>
+          <p class="font-bold text-slate-900 text-sm sm:text-base mb-3">
+            다음 네 단어 중 단어의 짜임(단어 형성 방식)이 <span class="text-rose-600 underline decoration-wavy font-black">나머지 셋과 다른</span> 하나를 고르세요!
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5" id="z1-q1-options">
+            <button onclick="checkZ1Q1(0)" class="z1-q1-btn comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ① 풋사랑 (풋- + 사랑)
+            </button>
+            <button onclick="checkZ1Q1(1)" class="z1-q1-btn comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ② 돌다리 (돌 + 다리)
+            </button>
+            <button onclick="checkZ1Q1(2)" class="z1-q1-btn comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ③ 맨손 (맨- + 손)
+            </button>
+            <button onclick="checkZ1Q1(3)" class="z1-q1-btn comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ④ 덧신 (덧- + 신)
+            </button>
+          </div>
+          <div id="z1-q1-feedback" class="mt-3 text-xs sm:text-sm font-bold hidden p-3 rounded-xl border-2 border-slate-900"></div>
+        </div>
+
+        <!-- Q1-2: Basket Sorting -->
+        <div class="mb-5 bg-yellow-50 p-4 rounded-2xl border-3 border-slate-900 shadow-pop-sm">
+          <span class="inline-block bg-emerald-500 text-white font-jua text-xs px-2.5 py-0.5 rounded-full border-2 border-slate-900 mb-2">
+            문제 2 ★ 바구니 분류 작전
+          </span>
+          <p class="font-bold text-slate-900 text-sm sm:text-base mb-2">
+            단어 카드를 먼저 누른 뒤, 알맞은 바구니를 눌러 분류하세요!
+          </p>
+
+          <div class="flex flex-wrap gap-2 mb-3" id="z1-word-chips">
+            <div class="z1-chip comic-btn px-3 py-1.5 bg-white text-slate-900 font-jua rounded-xl text-sm cursor-pointer" onclick="selectChip(this, '바람')">바람</div>
+            <div class="z1-chip comic-btn px-3 py-1.5 bg-white text-slate-900 font-jua rounded-xl text-sm cursor-pointer" onclick="selectChip(this, '눈웃음')">눈웃음</div>
+            <div class="z1-chip comic-btn px-3 py-1.5 bg-white text-slate-900 font-jua rounded-xl text-sm cursor-pointer" onclick="selectChip(this, '군소리')">군소리</div>
+            <div class="z1-chip comic-btn px-3 py-1.5 bg-white text-slate-900 font-jua rounded-xl text-sm cursor-pointer" onclick="selectChip(this, '구름')">구름</div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div onclick="dropToBasket('단일어')" class="basket-box p-3 bg-emerald-100 rounded-2xl border-3 border-dashed border-slate-900 min-h-[85px] cursor-pointer hover:bg-emerald-200 transition">
+              <span class="font-jua text-emerald-950 text-sm block">🧺 [단일어 바구니]</span>
+              <div id="basket-single" class="flex flex-wrap gap-1 mt-1.5"></div>
+            </div>
+            <div onclick="dropToBasket('합성어')" class="basket-box p-3 bg-amber-100 rounded-2xl border-3 border-dashed border-slate-900 min-h-[85px] cursor-pointer hover:bg-amber-200 transition">
+              <span class="font-jua text-amber-950 text-sm block">🧺 [합성어 바구니]</span>
+              <div id="basket-compound" class="flex flex-wrap gap-1 mt-1.5"></div>
+            </div>
+            <div onclick="dropToBasket('파생어')" class="basket-box p-3 bg-purple-100 rounded-2xl border-3 border-dashed border-slate-900 min-h-[85px] cursor-pointer hover:bg-purple-200 transition">
+              <span class="font-jua text-purple-950 text-sm block">🧺 [파생어 바구니]</span>
+              <div id="basket-derivative" class="flex flex-wrap gap-1 mt-1.5"></div>
+            </div>
+          </div>
+
+          <div class="mt-3 flex justify-between items-center">
+            <button onclick="resetZ1Baskets()" class="text-xs text-slate-600 underline font-bold hover:text-slate-900">다시 분류하기 🔄</button>
+            <button onclick="validateZ1Baskets()" class="comic-btn px-4 py-1.5 bg-emerald-400 hover:bg-emerald-300 text-slate-900 font-jua rounded-xl text-sm">
+              바구니 검사! ✔️
+            </button>
+          </div>
+          <div id="z1-basket-feedback" class="mt-2 text-xs sm:text-sm font-bold hidden p-2 rounded-xl border-2 border-slate-900"></div>
+        </div>
+
+        <!-- NEW Q1-3: Root & Affix Concept Identification -->
+        <div class="mb-5 bg-yellow-50 p-4 rounded-2xl border-3 border-slate-900 shadow-pop-sm">
+          <span class="inline-block bg-emerald-500 text-white font-jua text-xs px-2.5 py-0.5 rounded-full border-2 border-slate-900 mb-2">
+            문제 3 ★ 어근과 접사 탐정
+          </span>
+          <p class="font-bold text-slate-900 text-sm sm:text-base mb-3">
+            ‘단어의 중심이 되는 실질적 의미를 가진 부분’인 <b>어근</b>과 ‘그 앞뒤에 붙어 특별한 뜻을 더해주는’ <b>접사</b>에 대한 설명으로 <span class="text-emerald-700 underline font-black">올바른 것</span>은?
+          </p>
+          <div class="space-y-2" id="z1-q3-options">
+            <button onclick="checkZ1Q3(0)" class="z1-q3-btn w-full comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ① ‘지우개’에서 실질적 의미를 가진 어근은 ‘-개’이고, ‘지우-’는 접사이다.
+            </button>
+            <button onclick="checkZ1Q3(1)" class="z1-q3-btn w-full comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ② ‘합성어’는 접사와 접사가 결합하여 새로운 뜻을 만드는 단어이다.
+            </button>
+            <button onclick="checkZ1Q3(2)" class="z1-q3-btn w-full comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ③ ‘풋사과’의 ‘풋-’은 혼자 쓰일 수 없고 어근 앞에 붙어 ‘덜 익은’ 뜻을 더하는 접사이다.
+            </button>
+            <button onclick="checkZ1Q3(3)" class="z1-q3-btn w-full comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ④ ‘단일어’는 하나의 접사로만 이루어진 단어를 뜻한다.
+            </button>
+          </div>
+          <div id="z1-q3-feedback" class="mt-3 text-xs sm:text-sm font-bold hidden p-3 rounded-xl border-2 border-slate-900"></div>
+        </div>
+
+        <!-- Reward Banner -->
+        <div id="z1-reward-banner" class="hidden bg-emerald-300 p-5 rounded-3xl border-3 border-slate-900 shadow-pop text-center animate-wobble">
+          <div class="text-4xl mb-1">🎉</div>
+          <h3 class="font-jua text-2xl text-slate-900 mb-1">쪼개기 숲 퀘스트 3개 올클리어!</h3>
+          <p class="text-xs font-bold text-emerald-950 mb-2">첫 번째 황금 열쇠 조각을 획득했습니다.</p>
+          <div class="inline-block bg-white text-slate-900 font-jua text-xl px-6 py-2 rounded-2xl border-3 border-slate-900 shadow-pop-sm">
+            첫 번째 암호 조각: <span class="text-emerald-600 text-3xl font-black">【 단 】</span>
+          </div>
+          <div class="mt-3">
+            <button onclick="goToMap()" class="comic-btn px-6 py-2 bg-yellow-300 hover:bg-yellow-200 text-slate-900 font-jua rounded-2xl">
+              지도로 돌아가기 🗺️
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================= SCREEN 4: ZONE 2 QUEST (새말의 형성) ================= -->
+    <section id="screen-zone2" class="hidden flex-col">
+      <div class="comic-box bg-white rounded-3xl p-5 sm:p-7 max-w-3xl mx-auto w-full">
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b-3 border-slate-900 pb-3 mb-4">
+          <div class="flex items-center gap-3">
+            <span class="text-4xl p-2 bg-sky-200 rounded-2xl border-2 border-slate-900 shadow-pop-sm">✨</span>
+            <div>
+              <span class="text-xs font-black text-sky-800 uppercase tracking-wider">Zone 2 퀘스트</span>
+              <h2 class="text-2xl font-jua text-slate-900">반짝이는 샘터: 요정의 새말 연구실</h2>
+            </div>
+          </div>
+          <button onclick="goToMap()" class="comic-btn px-3 py-1.5 bg-yellow-200 text-slate-900 rounded-xl text-xs font-jua">
+            🗺️ 지도로 나가기
+          </button>
+        </div>
+
+        <!-- Concept Bubble -->
+        <div class="bg-sky-100 rounded-2xl p-4 mb-5 border-3 border-slate-900 shadow-pop-sm text-xs sm:text-sm text-slate-900">
+          <h4 class="font-jua text-base flex items-center gap-1 mb-1.5 text-sky-950">
+            <span>💡</span> 글또의 핵심 족집게 노트:
+          </h4>
+          <ul class="space-y-1 list-disc pl-5 font-medium">
+            <li><b>새말(신조어)</b>: 사회 변화와 새로운 현상이나 사물을 표현하기 위해 새롭게 만들어진 말</li>
+            <li><b>줄임형 새말</b>: 긴 구나 문장의 첫 글자를 따서 줄임 (예: 중꺾마 = 중요한 것은 꺾이지 않는 마음, 복세편살 = 복잡한 세상 편하게 살자)</li>
+            <li><b>합성형 새말</b>: 원래 있던 둘 이상의 단어를 합쳐서 만듦 (예: 혼밥 = 혼자 + 밥, 꿀잠 = 꿀 + 잠)</li>
+            <li>⚠️ <b>슬기로운 태도</b>: 편리함과 참신함이 있지만, 무분별하게 남발하면 세대 간의 소통을 방해할 수 있어요!</li>
+          </ul>
+        </div>
+
+        <!-- Q2-1: Principle of abbreviation vs combination -->
+        <div class="mb-5 bg-yellow-50 p-4 rounded-2xl border-3 border-slate-900 shadow-pop-sm">
+          <span class="inline-block bg-sky-500 text-white font-jua text-xs px-2.5 py-0.5 rounded-full border-2 border-slate-900 mb-2">
+            문제 1 ★ 새말의 형성 원리
+          </span>
+          <p class="font-bold text-slate-900 text-sm sm:text-base mb-3">
+            다음 새말 중, <b>단어의 첫 글자나 어절을 줄여서</b> 만든 축약형 새말이 <span class="text-rose-600 underline font-black">아닌</span> 것은?
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5" id="z2-q1-options">
+            <button onclick="checkZ2Q1(0)" class="z2-q1-btn comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ① 중꺾마 (중요한 것은 꺾이지 않는 마음)
+            </button>
+            <button onclick="checkZ2Q1(1)" class="z2-q1-btn comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ② 복세편살 (복잡한 세상 편하게 살자)
+            </button>
+            <button onclick="checkZ2Q1(2)" class="z2-q1-btn comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ③ 혼밥 (혼자 + 밥)
+            </button>
+            <button onclick="checkZ2Q1(3)" class="z2-q1-btn comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ④ 만반잘부 (만나서 반가워 잘 부탁해)
+            </button>
+          </div>
+          <div id="z2-q1-feedback" class="mt-3 text-xs sm:text-sm font-bold hidden p-3 rounded-xl border-2 border-slate-900"></div>
+        </div>
+
+        <!-- Q2-2: Attitude towards neologisms -->
+        <div class="mb-5 bg-yellow-50 p-4 rounded-2xl border-3 border-slate-900 shadow-pop-sm">
+          <span class="inline-block bg-sky-500 text-white font-jua text-xs px-2.5 py-0.5 rounded-full border-2 border-slate-900 mb-2">
+            문제 2 ★ 새말을 쓰는 올바른 태도
+          </span>
+          <p class="font-bold text-slate-900 text-sm sm:text-base mb-3">
+            새말을 대하는 태도로 <b>가장 바람직하고 올바른</b> 의견을 말한 친구는 누구일까요?
+          </p>
+          <div class="space-y-2" id="z2-q2-options">
+            <button onclick="checkZ2Q2(0)" class="z2-q2-btn w-full comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ① 지민: "새말은 트렌드니까 수업 발표 때나 어르신들과 이야기할 때도 무조건 써야 해!"
+            </button>
+            <button onclick="checkZ2Q2(1)" class="z2-q2-btn w-full comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ② 하은: "시대 변화를 담은 참신함을 인정하되, 듣는 이와 대화 상황을 배려해 가려 써야 해."
+            </button>
+            <button onclick="checkZ2Q2(2)" class="z2-q2-btn w-full comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ③ 태오: "우리말을 해치니까 인터넷이나 일상에서 모든 새말을 법으로 완전히 금지해야 해."
+            </button>
+          </div>
+          <div id="z2-q2-feedback" class="mt-3 text-xs sm:text-sm font-bold hidden p-3 rounded-xl border-2 border-slate-900"></div>
+        </div>
+
+        <!-- NEW Q2-3: Social background and creation reason -->
+        <div class="mb-5 bg-yellow-50 p-4 rounded-2xl border-3 border-slate-900 shadow-pop-sm">
+          <span class="inline-block bg-sky-500 text-white font-jua text-xs px-2.5 py-0.5 rounded-full border-2 border-slate-900 mb-2">
+            문제 3 ★ 새말이 생겨나는 까닭
+          </span>
+          <p class="font-bold text-slate-900 text-sm sm:text-base mb-3">
+            ‘반려식물’, ‘스마트팜’, ‘인공지능 비서’처럼 <b>새로운 말이 계속 만들어지는 까닭</b>으로 가장 알맞은 것은?
+          </p>
+          <div class="space-y-2" id="z2-q3-options">
+            <button onclick="checkZ2Q3(0)" class="z2-q3-btn w-full comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ① 사회, 문화, 과학기술이 발전하며 이전에는 없던 새로운 대상이나 삶의 방식이 생겨났기 때문이다.
+            </button>
+            <button onclick="checkZ2Q3(1)" class="z2-q3-btn w-full comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ② 기존에 있던 순우리말을 국어사전에서 모두 없애기 위해서이다.
+            </button>
+            <button onclick="checkZ2Q3(2)" class="z2-q3-btn w-full comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ③ 다른 나라 사람들이 우리말을 쉽게 알아듣지 못하도록 암호화하기 위해서이다.
+            </button>
+          </div>
+          <div id="z2-q3-feedback" class="mt-3 text-xs sm:text-sm font-bold hidden p-3 rounded-xl border-2 border-slate-900"></div>
+        </div>
+
+        <!-- Reward Banner -->
+        <div id="z2-reward-banner" class="hidden bg-sky-300 p-5 rounded-3xl border-3 border-slate-900 shadow-pop text-center animate-wobble">
+          <div class="text-4xl mb-1">🎉</div>
+          <h3 class="font-jua text-2xl text-slate-900 mb-1">반짝이는 샘터 퀘스트 3개 올클리어!</h3>
+          <p class="text-xs font-bold text-sky-950 mb-2">두 번째 황금 열쇠 조각을 획득했습니다.</p>
+          <div class="inline-block bg-white text-slate-900 font-jua text-xl px-6 py-2 rounded-2xl border-3 border-slate-900 shadow-pop-sm">
+            두 번째 암호 조각: <span class="text-sky-600 text-3xl font-black">【 어 】</span>
+          </div>
+          <div class="mt-3">
+            <button onclick="goToMap()" class="comic-btn px-6 py-2 bg-yellow-300 hover:bg-yellow-200 text-slate-900 font-jua rounded-2xl">
+              지도로 돌아가기 🗺️
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================= SCREEN 5: ZONE 3 QUEST (어휘의 양상과 쓰임) ================= -->
+    <section id="screen-zone3" class="hidden flex-col">
+      <div class="comic-box bg-white rounded-3xl p-5 sm:p-7 max-w-3xl mx-auto w-full">
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b-3 border-slate-900 pb-3 mb-4">
+          <div class="flex items-center gap-3">
+            <span class="text-4xl p-2 bg-rose-200 rounded-2xl border-2 border-slate-900 shadow-pop-sm">🏮</span>
+            <div>
+              <span class="text-xs font-black text-rose-800 uppercase tracking-wider">Zone 3 퀘스트</span>
+              <h2 class="text-2xl font-jua text-slate-900">왁자지껄 장터: 어휘의 양상과 쓰임</h2>
+            </div>
+          </div>
+          <button onclick="goToMap()" class="comic-btn px-3 py-1.5 bg-yellow-200 text-slate-900 rounded-xl text-xs font-jua">
+            🗺️ 지도로 나가기
+          </button>
+        </div>
+
+        <!-- Concept Bubble -->
+        <div class="bg-rose-100 rounded-2xl p-4 mb-5 border-3 border-slate-900 shadow-pop-sm text-xs sm:text-sm text-slate-900">
+          <h4 class="font-jua text-base flex items-center gap-1 mb-1.5 text-rose-950">
+            <span>💡</span> 글또의 핵심 족집게 노트:
+          </h4>
+          <ul class="space-y-1 list-disc pl-5 font-medium">
+            <li><b>세대별 어휘</b>: 어르신 세대의 정겨운 경험 어휘, 청소년 세대의 또래 일상 어휘 등 연령에 따른 차이</li>
+            <li><b>매체별 어휘</b>: 모바일 메신저/SNS에서는 빠르고 친근한 소통(줄임말, 이모티콘)을 쓰지만, 공식 공지나 보고서 같은 서면 매체에서는 바르고 정확한 표준어를 써야 함</li>
+            <li><b>분야별 어휘 (전문어)</b>: 의학, 과학, 법률 등 특정한 학문이나 직업 분야에서 개념을 명확하고 오해 없이 전달하기 위해 쓰는 어휘</li>
+          </ul>
+        </div>
+
+        <!-- Q3-1: Formal vs Informal Register -->
+        <div class="mb-5 bg-yellow-50 p-4 rounded-2xl border-3 border-slate-900 shadow-pop-sm">
+          <span class="inline-block bg-rose-500 text-white font-jua text-xs px-2.5 py-0.5 rounded-full border-2 border-slate-900 mb-2">
+            문제 1 ★ 공식적인 상황에 알맞은 말
+          </span>
+          <p class="font-bold text-slate-900 text-sm sm:text-base mb-3">
+            학교 축제 준비를 위해 <b>선생님과 상의하는 공식적인 면담 상황</b>입니다. 쓰기에 <span class="text-rose-600 underline font-black">가장 어색하고 부적절한</span> 표현은?
+          </p>
+          <div class="space-y-2" id="z3-q1-options">
+            <button onclick="checkZ3Q1(0)" class="z3-q1-btn w-full comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ① "선생님, 저희 모둠에서 구상한 무대 계획서를 검토해 주시겠습니까?"
+            </button>
+            <button onclick="checkZ3Q1(1)" class="z3-q1-btn w-full comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ② "선생님, 이번 공연 완전 꿀잼 각이니까 걱정 마시고 걍 저한테 다 맡겨주세요!"
+            </button>
+            <button onclick="checkZ3Q1(2)" class="z3-q1-btn w-full comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ③ "혹시 부족하거나 수정해야 할 부분이 있다면 조언을 부탁드립니다."
+            </button>
+            <button onclick="checkZ3Q1(3)" class="z3-q1-btn w-full comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ④ "소품 준비에 필요한 예산 목록을 정리하여 제출하겠습니다."
+            </button>
+          </div>
+          <div id="z3-q1-feedback" class="mt-3 text-xs sm:text-sm font-bold hidden p-3 rounded-xl border-2 border-slate-900"></div>
+        </div>
+
+        <!-- Q3-2: Characteristics of Generations, Media, Domain -->
+        <div class="mb-5 bg-yellow-50 p-4 rounded-2xl border-3 border-slate-900 shadow-pop-sm">
+          <span class="inline-block bg-rose-500 text-white font-jua text-xs px-2.5 py-0.5 rounded-full border-2 border-slate-900 mb-2">
+            문제 2 ★ 세대·매체·전문 분야 어휘 판별
+          </span>
+          <p class="font-bold text-slate-900 text-sm sm:text-base mb-3">
+            다음 중 <b>어휘의 양상(세대, 매체, 전문 분야)</b>에 대한 설명으로 <span class="text-rose-600 underline font-black">올바른 것</span>을 고르세요!
+          </p>
+          <div class="space-y-2.5" id="z3-q2-options">
+            <button onclick="checkZ3Q2(0)" class="z3-q2-btn w-full comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ① 병원에서 의사가 사용하는 '심전도 검사, 정맥 주사, 처방전'은 <b>세대별 어휘</b>에 해당한다.
+            </button>
+            <button onclick="checkZ3Q2(1)" class="z3-q2-btn w-full comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ② 모바일 메신저(SNS)에서 쓰는 'ㅇㅋ, 답장ㄱㄱ' 같은 줄임말은 <b>디지털 매체의 특성이 반영된 어휘</b>이다.
+            </button>
+            <button onclick="checkZ3Q2(2)" class="z3-q2-btn w-full comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ③ 할머니 세대와 원활하게 대화하기 위해서는 청소년들만 아는 인터넷 은어를 많이 섞어 써야 한다.
+            </button>
+            <button onclick="checkZ3Q2(3)" class="z3-q2-btn w-full comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ④ 컴퓨터 프로그래밍 분야의 전문어는 뜻이 애매모호해야 다양한 상황에서 두루 쓰일 수 있다.
+            </button>
+          </div>
+          <div id="z3-q2-feedback" class="mt-3 text-xs sm:text-sm font-bold hidden p-3 rounded-xl border-2 border-slate-900"></div>
+        </div>
+
+        <!-- NEW Q3-3: Professional Vocabulary (전문어) -->
+        <div class="mb-5 bg-yellow-50 p-4 rounded-2xl border-3 border-slate-900 shadow-pop-sm">
+          <span class="inline-block bg-rose-500 text-white font-jua text-xs px-2.5 py-0.5 rounded-full border-2 border-slate-900 mb-2">
+            문제 3 ★ 전문어의 특징과 배려하는 태도
+          </span>
+          <p class="font-bold text-slate-900 text-sm sm:text-base mb-3">
+            의사, 법관, 과학자 등 특정 직업이나 학문에서 쓰는 <b>‘전문어(분야별 어휘)’</b>를 일반 대중과 소통할 때 바람직하게 사용하는 방법은?
+          </p>
+          <div class="space-y-2" id="z3-q3-options">
+            <button onclick="checkZ3Q3(0)" class="z3-q3-btn w-full comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ① 전문가로서의 권위를 돋보이게 하기 위해 환자나 청중이 못 알아듣는 어려운 전문 용어만 쓴다.
+            </button>
+            <button onclick="checkZ3Q3(1)" class="z3-q3-btn w-full comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ② 일반인을 대상으로 설명할 때는 전문적인 개념을 누구나 알기 쉬운 쉬운 일상어로 풀어서 설명해 준다.
+            </button>
+            <button onclick="checkZ3Q3(2)" class="z3-q3-btn w-full comic-btn text-left p-3 rounded-2xl bg-white font-bold text-sm">
+              ③ 전문어는 사회적 소통을 방해하므로 모든 학술 서적에서 전문어를 전부 삭제해야 한다.
+            </button>
+          </div>
+          <div id="z3-q3-feedback" class="mt-3 text-xs sm:text-sm font-bold hidden p-3 rounded-xl border-2 border-slate-900"></div>
+        </div>
+
+        <!-- Reward Banner -->
+        <div id="z3-reward-banner" class="hidden bg-rose-300 p-5 rounded-3xl border-3 border-slate-900 shadow-pop text-center animate-wobble">
+          <div class="text-4xl mb-1">🎉</div>
+          <h3 class="font-jua text-2xl text-slate-900 mb-1">왁자지껄 장터 퀘스트 3개 올클리어!</h3>
+          <p class="text-xs font-bold text-rose-950 mb-2">세 번째 황금 열쇠 조각을 획득했습니다.</p>
+          <div class="inline-block bg-white text-slate-900 font-jua text-xl px-6 py-2 rounded-2xl border-3 border-slate-900 shadow-pop-sm">
+            세 번째 암호 조각: <span class="text-rose-600 text-3xl font-black">【 왕 】</span>
+          </div>
+          <div class="mt-3">
+            <button onclick="goToMap()" class="comic-btn px-6 py-2 bg-yellow-300 hover:bg-yellow-200 text-slate-900 font-jua rounded-2xl">
+              지도로 돌아가기 🗺️
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================= SCREEN 6: VAULT UNLOCK ================= -->
+    <section id="screen-vault" class="hidden flex-col items-center">
+      <div class="comic-box bg-white rounded-3xl p-6 sm:p-8 max-w-xl mx-auto w-full text-center">
+        
+        <div class="w-24 h-24 mx-auto rounded-3xl bg-amber-300 border-4 border-slate-900 flex items-center justify-center text-5xl mb-3 shadow-pop animate-jiggle">
+          🔒
+        </div>
+        <h2 class="text-3xl font-jua text-slate-900 mb-1">말글 성당의 비밀 금고</h2>
+        <p class="text-xs sm:text-sm text-slate-700 mb-5 font-bold">
+          1~3구역에서 모은 <b>3글자 암호</b>를 조합하여 보물 상자를 열어보세요!
+        </p>
+
+        <!-- Acquired Key Pieces display -->
+        <div class="flex justify-center gap-2 sm:gap-3 mb-5">
+          <div class="px-4 py-2 bg-emerald-100 rounded-2xl border-2 border-slate-900 shadow-pop-sm text-xs font-bold">
+            1구역 숲: <span id="v-k1" class="text-emerald-700 font-jua text-xl">?</span>
+          </div>
+          <div class="px-4 py-2 bg-sky-100 rounded-2xl border-2 border-slate-900 shadow-pop-sm text-xs font-bold">
+            2구역 샘터: <span id="v-k2" class="text-sky-700 font-jua text-xl">?</span>
+          </div>
+          <div class="px-4 py-2 bg-rose-100 rounded-2xl border-2 border-slate-900 shadow-pop-sm text-xs font-bold">
+            3구역 장터: <span id="v-k3" class="text-rose-700 font-jua text-xl">?</span>
+          </div>
+        </div>
+
+        <div class="max-w-xs mx-auto mb-4">
+          <input type="text" id="vault-input" maxlength="6" placeholder="세 글자 입력" 
+                 class="w-full text-center tracking-widest text-3xl font-jua uppercase py-3 border-3 border-slate-900 rounded-2xl bg-yellow-50 focus:outline-none focus:bg-white shadow-pop">
+        </div>
+
+        <div class="flex gap-2 justify-center">
+          <button onclick="goToMap()" class="comic-btn px-5 py-2.5 bg-slate-200 text-slate-900 rounded-2xl font-jua text-sm">
+            지도로 가기 🗺️
+          </button>
+          <button onclick="unlockTreasure()" class="comic-btn px-7 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-900 font-jua text-lg rounded-2xl">
+            금고 열기! ✨
+          </button>
+        </div>
+
+        <div id="vault-feedback" class="mt-4 text-sm font-bold hidden p-3 rounded-2xl border-2 border-slate-900"></div>
+      </div>
+    </section>
+
+    <!-- ================= SCREEN 7: VICTORY & CUTE CERTIFICATE ================= -->
+    <section id="screen-victory" class="hidden flex-col items-center">
+      <div class="comic-box bg-yellow-100 rounded-3xl p-6 sm:p-8 max-w-2xl mx-auto w-full text-center relative overflow-hidden">
+        
+        <div class="w-24 h-24 mx-auto rounded-full bg-amber-300 border-4 border-slate-900 flex items-center justify-center text-6xl shadow-pop mb-3 animate-jiggle">
+          👑
+        </div>
+
+        <span class="inline-block bg-rose-500 text-white font-jua text-xs px-3 py-1 rounded-full border-2 border-slate-900 shadow-pop-sm mb-2">
+          말글마을 탐험 완수!
+        </span>
+
+        <h2 class="text-3xl sm:text-4xl font-jua text-slate-900 mb-2">
+          황금 보물 상자를 열었습니다! 🎉
+        </h2>
+        <p class="text-sm font-bold text-slate-700 mb-5">
+          축하합니다! <b><span id="cert-name" class="text-rose-600 font-black">탐험가</span></b> 대원은 9개의 모든 퀘스트를 완벽히 통과했습니다!
+        </p>
+
+        <!-- Comic Certificate Card -->
+        <div class="bg-white p-5 rounded-3xl border-3 border-slate-900 shadow-pop text-left mb-5">
+          <div class="border-2 border-dashed border-amber-400 p-4 rounded-2xl bg-amber-50/50">
+            <h3 class="font-jua text-2xl text-center text-slate-900 border-b-2 border-slate-200 pb-2 mb-3">
+              📜 말글마을 명예 어휘 마스터 인증서
+            </h3>
+            <p class="text-xs sm:text-sm text-slate-800 leading-relaxed mb-4 font-medium">
+              위 대원은 중학교 1학년 국어 <b>‘단어의 짜임(단일어·합성어·파생어 및 어근과 접사)’</b>, <b>‘새말의 형성과 언어문화’</b>, <b>‘세대·매체·분야별 어휘의 양상과 슬기로운 쓰임’</b> 퀘스트(총 9문항)를 모두 스스로 해결하였으므로 이 증서를 수여합니다.
+            </p>
+            <div class="flex justify-between items-center text-xs font-bold text-slate-600 border-t-2 border-slate-200 pt-2">
+              <span>남은 시간: <span id="cert-time" class="text-emerald-700 font-mono font-black">--:--</span></span>
+              <span>수여 칭호: <b class="text-rose-600">어휘 마스터 1급 🏅</b></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lesson Summary for Wrap-up -->
+        <div class="bg-white p-4 rounded-2xl border-3 border-slate-900 shadow-pop text-left text-xs sm:text-sm text-slate-800 mb-5">
+          <h4 class="font-jua text-base text-slate-900 flex items-center gap-1 mb-2">
+            <span>📝</span> 오늘 1차시 배움 한눈에 정리하기
+          </h4>
+          <ol class="list-decimal pl-5 space-y-1 font-medium">
+            <li><b>단어의 짜임</b>: 어근끼리 만난 ‘돌다리’는 <b>합성어</b>, 접사가 붙은 ‘풋사과’는 <b>파생어</b>!</li>
+            <li><b>새말의 가치</b>: 새말은 사회 변화를 반영해 편리하지만, <b>상대방과 대화 상황</b>에 맞춰 써야 소통이 통함!</li>
+            <li><b>어휘의 양상</b>: <b>세대·매체·전문 분야</b>에 따른 어휘 차이를 존중하고, 공식적인 자리에서는 <b>바르고 공손한 표준어</b> 사용하기!</li>
+          </ol>
+        </div>
+
+        <div class="flex flex-wrap gap-2.5 justify-center">
+          <button onclick="window.print()" class="comic-btn px-5 py-2.5 bg-slate-800 text-white rounded-2xl font-jua text-sm">
+            🖨 인증서 인쇄/저장
+          </button>
+          <button onclick="goToMap()" class="comic-btn px-5 py-2.5 bg-sky-300 text-slate-900 rounded-2xl font-jua text-sm">
+            🗺️ 지도 다시보기
+          </button>
+          <button onclick="resetGame()" class="comic-btn px-5 py-2.5 bg-yellow-300 text-slate-900 rounded-2xl font-jua text-sm">
+            🔄 새로 시작하기
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: HELP -->
+  <div id="modal-help" class="fixed inset-0 bg-slate-900/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="comic-box bg-white rounded-3xl max-w-lg w-full p-6 shadow-pop-xl max-h-[85vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-3 border-b-2 border-slate-200 pb-2">
+        <h3 class="font-jua text-2xl text-slate-900 flex items-center gap-2">
+          <span>📖</span> 탐험대 규칙 및 팁
+        </h3>
+        <button onclick="closeHelpModal()" class="text-2xl font-bold hover:text-rose-500">×</button>
+      </div>
+      <div class="space-y-3 text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
+        <div class="p-3 bg-emerald-50 rounded-2xl border-2 border-slate-900">
+          <b class="text-emerald-950">🌲 1. 쪼개기 숲 (단어의 짜임 - 3문제)</b><br>
+          단일어, 합성어, 파생어를 바르게 구분하고 어근과 접사의 성격을 맞혀보세요.
+        </div>
+        <div class="p-3 bg-sky-50 rounded-2xl border-2 border-slate-900">
+          <b class="text-sky-950">✨ 2. 반짝이는 샘터 (새말의 원리 - 3문제)</b><br>
+          줄임형 새말, 합성형 새말의 원리와 사회적 변화, 올바른 언어 태도를 확인하세요.
+        </div>
+        <div class="p-3 bg-rose-50 rounded-2xl border-2 border-slate-900">
+          <b class="text-rose-950">🏮 3. 왁자지껄 장터 (어휘의 양상과 쓰임 - 3문제)</b><br>
+          세대별 어휘, 디지털 매체 어휘, 전문어(분야별 어휘)의 특징과 상황에 맞는 예의 바른 표현을 고르세요.
+        </div>
+        <div class="p-3 bg-amber-50 rounded-2xl border-2 border-slate-900">
+          <b class="text-amber-950">👑 4. 황금 보물 상자</b><br>
+          세 구역에서 얻은 열쇠 글자 3개를 합친 <b>3글자 단어</b>를 입력하면 보물 금고가 열립니다!
+        </div>
+      </div>
+      <div class="mt-4 text-center">
+        <button onclick="closeHelpModal()" class="comic-btn px-6 py-2 bg-yellow-300 text-slate-900 rounded-2xl font-jua">
+          확인하고 계속하기 🚀
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none comic-box bg-slate-900 text-white px-4 py-2.5 rounded-2xl flex items-center gap-2 text-xs sm:text-sm font-bold">
+    <span id="toast-icon">✨</span>
+    <span id="toast-msg">알림 메시지</span>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-amber-300 border-t-3 border-slate-900 py-2 text-center text-xs font-bold text-slate-800">
+    말글마을 탐험대 • 중학교 1학년 국어 인터랙티브 디지털 활동
+  </footer>
+
+  <script>
+    // Game State
+    const gameState = {
+      playerName: '탐험가',
+      keys: {
+        zone1: false, // '단'
+        zone2: false, // '어'
+        zone3: false, // '왕'
+      },
+      soundEnabled: true,
+      timeRemaining: 45 * 60,
+      timerInterval: null,
+      selectedChip: null,
+      basketItems: { 단일어: [], 합성어: [], 파생어: [] }
+    };
+
+    // Tracking solved status for all 9 questions
+    const solved = {
+      z1q1: false, z1q2: false, z1q3: false,
+      z2q1: false, z2q2: false, z2q3: false,
+      z3q1: false, z3q2: false, z3q3: false
+    };
+
+    // Web Audio Synthesizer
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(type) {
+      if (!gameState.soundEnabled) return;
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === 'correct') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(523.25, now); // C5
+          osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+          osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
+          osc.frequency.setValueAtTime(1046.50, now + 0.24); // C6
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+          osc.start(now);
+          osc.stop(now + 0.45);
+        } else if (type === 'wrong') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(280, now);
+          osc.frequency.linearRampToValueAtTime(140, now + 0.25);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.28);
+          osc.start(now);
+          osc.stop(now + 0.28);
+        } else if (type === 'click') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(650, now);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.07);
+          osc.start(now);
+          osc.stop(now + 0.07);
+        } else if (type === 'victory') {
+          const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+          notes.forEach((freq, idx) => {
+            const nOsc = audioCtx.createOscillator();
+            const nGain = audioCtx.createGain();
+            nOsc.connect(nGain);
+            nGain.connect(audioCtx.destination);
+            nOsc.type = 'triangle';
+            nOsc.frequency.setValueAtTime(freq, now + idx * 0.1);
+            nGain.gain.setValueAtTime(0.2, now + idx * 0.1);
+            nGain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.35);
+            nOsc.start(now + idx * 0.1);
+            nOsc.stop(now + idx * 0.1 + 0.35);
+          });
+        }
+      } catch (e) {
+        console.warn('Audio play error:', e);
+      }
+    }
+
+    function toggleAudio() {
+      gameState.soundEnabled = !gameState.soundEnabled;
+      document.getElementById('audio-toggle').innerText = gameState.soundEnabled ? '🔊' : '🔇';
+      showToast(gameState.soundEnabled ? '🔊 효과음이 켜졌습니다.' : '🔇 효과음이 꺼졌습니다.');
+    }
+
+    function startTimer() {
+      if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+      updateTimerDisplay();
+      gameState.timerInterval = setInterval(() => {
+        if (gameState.timeRemaining > 0) {
+          gameState.timeRemaining--;
+          updateTimerDisplay();
+        } else {
+          clearInterval(gameState.timerInterval);
+          showToast('⏰ 45분 수업 시간이 종료되었습니다!', 'error');
+        }
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      const minutes = Math.floor(gameState.timeRemaining / 60);
+      const seconds = gameState.timeRemaining % 60;
+      const formatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      const elem = document.getElementById('class-timer');
+      if (elem) elem.innerText = formatted;
+      const certTime = document.getElementById('cert-time');
+      if (certTime) certTime.innerText = formatted;
+    }
+
+    function hideAllScreens() {
+      ['screen-intro', 'screen-map', 'screen-zone1', 'screen-zone2', 'screen-zone3', 'screen-vault', 'screen-victory'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+      });
+    }
+
+    function showScreen(screenId) {
+      hideAllScreens();
+      const el = document.getElementById(screenId);
+      if (el) {
+        el.classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    function goToHome() { playSound('click'); showScreen('screen-map'); }
+    function goToMap() { playSound('click'); updateKeyBadges(); showScreen('screen-map'); }
+
+    function startAdventure() {
+      playSound('click');
+      const input = document.getElementById('student-name');
+      gameState.playerName = input.value.trim() || '씩씩한 탐험대원';
+      document.getElementById('display-explorer-name').innerText = gameState.playerName;
+      document.getElementById('cert-name').innerText = gameState.playerName;
+      startTimer();
+      showScreen('screen-map');
+      showToast(`반가워, ${gameState.playerName}! 1구역부터 출발해봐! 🏕️`);
+    }
+
+    function openZone(num) {
+      playSound('click');
+      if (num === 1) showScreen('screen-zone1');
+      if (num === 2) showScreen('screen-zone2');
+      if (num === 3) showScreen('screen-zone3');
+    }
+
+    function openVault() {
+      playSound('click');
+      document.getElementById('v-k1').innerText = gameState.keys.zone1 ? '단' : '?';
+      document.getElementById('v-k2').innerText = gameState.keys.zone2 ? '어' : '?';
+      document.getElementById('v-k3').innerText = gameState.keys.zone3 ? '왕' : '?';
+      showScreen('screen-vault');
+    }
+
+    function updateKeyBadges() {
+      const k1Badge = document.getElementById('key1-badge');
+      const k2Badge = document.getElementById('key2-badge');
+      const k3Badge = document.getElementById('key3-badge');
+      const s1 = document.getElementById('badge-status-1');
+      const s2 = document.getElementById('badge-status-2');
+      const s3 = document.getElementById('badge-status-3');
+
+      if (gameState.keys.zone1) {
+        k1Badge.className = 'px-2 py-0.5 bg-emerald-400 text-slate-900 rounded-xl text-xs font-jua border-2 border-slate-900';
+        k1Badge.innerText = '숲 [단] ✔';
+        s1.className = 'absolute -top-3 -right-3 bg-emerald-400 text-slate-900 font-jua text-xs px-2.5 py-1 rounded-full border-2 border-slate-900 shadow-pop-sm';
+        s1.innerText = '완료 ✔';
+      }
+      if (gameState.keys.zone2) {
+        k2Badge.className = 'px-2 py-0.5 bg-sky-300 text-slate-900 rounded-xl text-xs font-jua border-2 border-slate-900';
+        k2Badge.innerText = '샘터 [어] ✔';
+        s2.className = 'absolute -top-3 -right-3 bg-sky-300 text-slate-900 font-jua text-xs px-2.5 py-1 rounded-full border-2 border-slate-900 shadow-pop-sm';
+        s2.innerText = '완료 ✔';
+      }
+      if (gameState.keys.zone3) {
+        k3Badge.className = 'px-2 py-0.5 bg-rose-300 text-slate-900 rounded-xl text-xs font-jua border-2 border-slate-900';
+        k3Badge.innerText = '장터 [왕] ✔';
+        s3.className = 'absolute -top-3 -right-3 bg-rose-300 text-slate-900 font-jua text-xs px-2.5 py-1 rounded-full border-2 border-slate-900 shadow-pop-sm';
+        s3.innerText = '완료 ✔';
+      }
+
+      if (gameState.keys.zone1 && gameState.keys.zone2 && gameState.keys.zone3) {
+        const vaultPin = document.getElementById('vault-pin-box');
+        vaultPin.innerHTML = '🔓';
+        vaultPin.classList.add('bg-yellow-300', 'animate-bounce');
+      }
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').innerText = message;
+      document.getElementById('toast-icon').innerText = type === 'error' ? '⚠️' : '✨';
+      toast.className = 'fixed bottom-5 right-5 z-50 opacity-100 transform translate-y-0 transition-all duration-300 comic-box bg-slate-900 text-white px-4 py-2.5 rounded-2xl flex items-center gap-2 text-xs sm:text-sm font-bold shadow-pop';
+      setTimeout(() => {
+        toast.className = 'fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none comic-box bg-slate-900 text-white px-4 py-2.5 rounded-2xl flex items-center gap-2 text-xs sm:text-sm font-bold';
+      }, 2800);
+    }
+
+    function openHelpModal() { playSound('click'); document.getElementById('modal-help').classList.remove('hidden'); }
+    function closeHelpModal() { playSound('click'); document.getElementById('modal-help').classList.add('hidden'); }
+
+    // Helper: Trigger localized mini confetti burst for correct answers
+    function fireMiniConfetti(element) {
+      if (!window.confetti) return;
+      if (element) {
+        const rect = element.getBoundingClientRect();
+        const x = (rect.left + rect.width / 2) / window.innerWidth;
+        const y = (rect.top + rect.height / 2) / window.innerHeight;
+        confetti({
+          particleCount: 30,
+          spread: 60,
+          origin: { x: Math.max(0.1, Math.min(0.9, x)), y: Math.max(0.1, Math.min(0.9, y)) },
+          colors: ['#10B981', '#34D399', '#FDE047', '#38BDF8', '#F43F5E']
+        });
+      } else {
+        confetti({ particleCount: 25, spread: 50, origin: { y: 0.6 } });
+      }
+    }
+
+    // Helper to clear option buttons styling
+    function resetOptionButtons(selector) {
+      document.querySelectorAll(selector).forEach(btn => {
+        btn.classList.remove('btn-correct-burst', 'btn-wrong-shake');
+        btn.className = btn.className
+          .replace(/btn-correct-burst|btn-wrong-shake/g, '')
+          .replace(/bg-emerald-[0-9]+|bg-rose-[0-9]+|bg-sky-[0-9]+|bg-amber-[0-9]+/g, '');
+        if (!btn.classList.contains('bg-white')) {
+          btn.classList.add('bg-white');
+        }
+      });
+    }
+
+    // ================= ZONE 1 LOGIC =================
+    function checkZ1Q1(idx) {
+      const fb = document.getElementById('z1-q1-feedback');
+      const buttons = document.querySelectorAll('#z1-q1-options button');
+      fb.classList.remove('hidden');
+
+      resetOptionButtons('#z1-q1-options button');
+
+      if (idx === 1) { // 돌다리 (합성어)
+        playSound('correct');
+        solved.z1q1 = true;
+        buttons[idx].classList.remove('bg-white');
+        buttons[idx].classList.add('btn-correct-burst');
+        fb.className = 'mt-3 text-xs sm:text-sm font-black p-4 rounded-2xl border-4 border-emerald-600 bg-emerald-500 text-white shadow-pop-lg animate-bounce';
+        fb.innerHTML = `
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-2xl">🎉</span>
+            <span class="text-base font-jua text-yellow-200">정답입니다! 완벽해요!</span>
+          </div>
+          <p class="font-normal font-sans text-xs sm:text-sm leading-relaxed text-emerald-50">
+            ‘돌다리’는 어근(돌)과 어근(다리)이 결합한 <b>합성어</b>입니다.<br>
+            나머지(풋사랑, 맨손, 덧신)는 모두 접사(풋-, 맨-, 덧-)가 결합한 <b>파생어</b>입니다!
+          </p>`;
+        fireMiniConfetti(buttons[idx]);
+        checkZone1Completion();
+      } else {
+        playSound('wrong');
+        solved.z1q1 = false;
+        buttons[idx].classList.remove('bg-white');
+        buttons[idx].classList.add('btn-wrong-shake');
+        fb.className = 'mt-3 text-xs sm:text-sm font-bold p-3.5 rounded-2xl border-3 border-rose-500 bg-rose-100 text-rose-950 shadow-pop-sm';
+        fb.innerHTML = `
+          <div class="flex items-center gap-1.5 mb-1 text-rose-700 font-jua text-sm">
+            <span>❌</span> <span>앗, 아쉬워요! 다시 한번 찾아보세요!</span>
+          </div>
+          <p class="font-normal text-xs sm:text-sm text-slate-800">
+            선택한 단어는 어근 앞에 뜻을 덧붙이는 <b>‘접사’</b>가 붙은 파생어입니다. 두 덩어리 모두 원래 뚜렷한 뜻이 있는 <b>어근끼리 만난 단어</b>를 골라보세요!
+          </p>`;
+      }
+    }
+
+    function selectChip(element, word) {
+      playSound('click');
+      document.querySelectorAll('.z1-chip').forEach(el => el.classList.remove('bg-yellow-300', 'scale-105'));
+      element.classList.add('bg-yellow-300', 'scale-105');
+      gameState.selectedChip = { element, word };
+      showToast(`'${word}' 카드를 선택했습니다! 담을 바구니를 누르세요.`);
+    }
+
+    function dropToBasket(type) {
+      if (!gameState.selectedChip) {
+        showToast('먼저 낱말 카드 중 하나를 선택해 주세요!', 'error');
+        return;
+      }
+      playSound('click');
+      const word = gameState.selectedChip.word;
+      const chipEl = gameState.selectedChip.element;
+
+      ['단일어', '합성어', '파생어'].forEach(b => {
+        gameState.basketItems[b] = gameState.basketItems[b].filter(w => w !== word);
+      });
+
+      gameState.basketItems[type].push(word);
+      chipEl.remove();
+      gameState.selectedChip = null;
+      renderBaskets();
+    }
+
+    function renderBaskets() {
+      const map = { '단일어': 'basket-single', '합성어': 'basket-compound', '파생어': 'basket-derivative' };
+      for (const [key, id] of Object.entries(map)) {
+        const cont = document.getElementById(id);
+        cont.innerHTML = '';
+        gameState.basketItems[key].forEach(w => {
+          const span = document.createElement('span');
+          span.className = 'inline-block bg-white px-2 py-0.5 rounded-xl text-xs font-jua border-2 border-slate-900 shadow-pop-sm';
+          span.innerText = w;
+          cont.appendChild(span);
+        });
+      }
+    }
+
+    function resetZ1Baskets() {
+      playSound('click');
+      gameState.basketItems = { 단일어: [], 합성어: [], 파생어: [] };
+      gameState.selectedChip = null;
+      renderBaskets();
+      const chipArea = document.getElementById('z1-word-chips');
+      chipArea.innerHTML = `
+        <div class="z1-chip comic-btn px-3 py-1.5 bg-white text-slate-900 font-jua rounded-xl text-sm cursor-pointer" onclick="selectChip(this, '바람')">바람</div>
+        <div class="z1-chip comic-btn px-3 py-1.5 bg-white text-slate-900 font-jua rounded-xl text-sm cursor-pointer" onclick="selectChip(this, '눈웃음')">눈웃음</div>
+        <div class="z1-chip comic-btn px-3 py-1.5 bg-white text-slate-900 font-jua rounded-xl text-sm cursor-pointer" onclick="selectChip(this, '군소리')">군소리</div>
+        <div class="z1-chip comic-btn px-3 py-1.5 bg-white text-slate-900 font-jua rounded-xl text-sm cursor-pointer" onclick="selectChip(this, '구름')">구름</div>
+      `;
+      document.getElementById('z1-basket-feedback').classList.add('hidden');
+    }
+
+    function validateZ1Baskets() {
+      const fb = document.getElementById('z1-basket-feedback');
+      fb.classList.remove('hidden');
+      const s = gameState.basketItems['단일어'];
+      const c = gameState.basketItems['합성어'];
+      const d = gameState.basketItems['파생어'];
+
+      if (s.length + c.length + d.length < 4) {
+        playSound('wrong');
+        fb.className = 'mt-2 text-xs sm:text-sm font-bold p-2.5 rounded-xl border-2 border-slate-900 bg-amber-100 text-amber-950';
+        fb.innerText = '⚠️ 아직 담지 않은 카드가 있습니다. 4개의 단어를 모두 바구니에 담아주세요!';
+        return;
+      }
+
+      const correctSingle = s.includes('바람') && s.includes('구름') && s.length === 2;
+      const correctCompound = c.includes('눈웃음') && c.length === 1;
+      const correctDerivative = d.includes('군소리') && d.length === 1;
+
+      if (correctSingle && correctCompound && correctDerivative) {
+        playSound('correct');
+        solved.z1q2 = true;
+        fb.className = 'mt-3 text-xs sm:text-sm font-black p-4 rounded-2xl border-4 border-emerald-600 bg-emerald-500 text-white shadow-pop-lg animate-bounce';
+        fb.innerHTML = `
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-2xl">🎉</span>
+            <span class="text-base font-jua text-yellow-200">바구니 분류 100점 만점!</span>
+          </div>
+          <ul class="text-xs sm:text-sm font-normal text-emerald-50 space-y-0.5 list-disc pl-4">
+            <li><b>단일어</b>: 바람, 구름 (더 이상 쪼갤 수 없는 하나의 어근)</li>
+            <li><b>합성어</b>: 눈웃음 (어근 '눈' + 어근 '웃음')</li>
+            <li><b>파생어</b>: 군소리 (쓸데없는 뜻의 접두사 '군-' + 어근 '소리')</li>
+          </ul>`;
+        fireMiniConfetti(fb);
+        checkZone1Completion();
+      } else {
+        playSound('wrong');
+        solved.z1q2 = false;
+        fb.className = 'mt-3 text-xs sm:text-sm font-bold p-3.5 rounded-2xl border-3 border-rose-500 bg-rose-100 text-rose-950 shadow-pop-sm';
+        fb.innerHTML = `
+          <div class="flex items-center gap-1.5 mb-1 text-rose-700 font-jua text-sm">
+            <span>❌</span> <span>바구니에 잘못 들어간 단어가 있어요!</span>
+          </div>
+          <p class="font-normal text-xs sm:text-sm text-slate-800">
+            ‘군소리’의 ‘군-’은 덧붙는 접사이고, ‘눈웃음’은 ‘눈’과 ‘웃음’ 두 단어가 합쳐진 말이에요. <b>[다시 분류하기 🔄]</b>를 눌러 다시 담아보세요!
+          </p>`;
+      }
+    }
+
+    function checkZ1Q3(idx) {
+      const fb = document.getElementById('z1-q3-feedback');
+      const buttons = document.querySelectorAll('#z1-q3-options button');
+      fb.classList.remove('hidden');
+
+      resetOptionButtons('#z1-q3-options button');
+
+      if (idx === 2) { // 풋사과의 풋-
+        playSound('correct');
+        solved.z1q3 = true;
+        buttons[idx].classList.remove('bg-white');
+        buttons[idx].classList.add('btn-correct-burst');
+        fb.className = 'mt-3 text-xs sm:text-sm font-black p-4 rounded-2xl border-4 border-emerald-600 bg-emerald-500 text-white shadow-pop-lg animate-bounce';
+        fb.innerHTML = `
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-2xl">🎉</span>
+            <span class="text-base font-jua text-yellow-200">정답입니다! 어근과 접사 마스터!</span>
+          </div>
+          <p class="font-normal font-sans text-xs sm:text-sm leading-relaxed text-emerald-50">
+            ‘풋-’은 홀로 쓰일 수 없는 <b>접사(접두사)</b>이며, ‘사과’라는 중심 어근 앞에 붙어 ‘덜 익은’ 뜻을 더해줍니다.<br>
+            • ‘지우개’의 실질적 어근은 ‘지우-’이고 ‘-개’는 도구를 만드는 접사입니다.<br>
+            • 합성어는 ‘어근 + 어근’의 결합입니다!
+          </p>`;
+        fireMiniConfetti(buttons[idx]);
+        checkZone1Completion();
+      } else {
+        playSound('wrong');
+        solved.z1q3 = false;
+        buttons[idx].classList.remove('bg-white');
+        buttons[idx].classList.add('btn-wrong-shake');
+        fb.className = 'mt-3 text-xs sm:text-sm font-bold p-3.5 rounded-2xl border-3 border-rose-500 bg-rose-100 text-rose-950 shadow-pop-sm';
+        fb.innerHTML = `
+          <div class="flex items-center gap-1.5 mb-1 text-rose-700 font-jua text-sm">
+            <span>❌</span> <span>틀렸습니다! 어근과 접사의 성격을 다시 떠올려보세요.</span>
+          </div>
+          <p class="font-normal text-xs sm:text-sm text-slate-800">
+            <b>어근</b>은 단어의 ‘실질적인 뜻의 중심’이고, <b>접사</b>는 혼자 쓰이지 못하고 앞뒤에서 보조하는 역할을 합니다. 다른 보기를 눌러 다시 풀어보세요!
+          </p>`;
+      }
+    }
+
+    function checkZone1Completion() {
+      if (solved.z1q1 && solved.z1q2 && solved.z1q3) {
+        gameState.keys.zone1 = true;
+        document.getElementById('z1-reward-banner').classList.remove('hidden');
+        confetti({ particleCount: 60, spread: 70, origin: { y: 0.7 } });
+        updateKeyBadges();
+      }
+    }
+
+    // ================= ZONE 2 LOGIC =================
+    function checkZ2Q1(idx) {
+      const fb = document.getElementById('z2-q1-feedback');
+      const buttons = document.querySelectorAll('#z2-q1-options button');
+      fb.classList.remove('hidden');
+
+      resetOptionButtons('#z2-q1-options button');
+
+      if (idx === 2) { // 혼밥
+        playSound('correct');
+        solved.z2q1 = true;
+        buttons[idx].classList.remove('bg-white');
+        buttons[idx].classList.add('btn-correct-burst');
+        fb.className = 'mt-3 text-xs sm:text-sm font-black p-4 rounded-2xl border-4 border-emerald-600 bg-emerald-500 text-white shadow-pop-lg animate-bounce';
+        fb.innerHTML = `
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-2xl">🎉</span>
+            <span class="text-base font-jua text-yellow-200">정답입니다! 눈썰미가 대단해요!</span>
+          </div>
+          <p class="font-normal font-sans text-xs sm:text-sm leading-relaxed text-emerald-50">
+            ‘혼밥’은 첫 글자만 딴 줄임말이 아니라, ‘혼자 + 밥’ 두 단어가 만난 <b>합성형 새말</b>입니다!<br>
+            나머지(중꺾마, 복세편살, 만반잘부)는 모두 문장의 앞 글자를 딴 <b>축약형(줄임말)</b>입니다.
+          </p>`;
+        fireMiniConfetti(buttons[idx]);
+        checkZone2Completion();
+      } else {
+        playSound('wrong');
+        solved.z2q1 = false;
+        buttons[idx].classList.remove('bg-white');
+        buttons[idx].classList.add('btn-wrong-shake');
+        fb.className = 'mt-3 text-xs sm:text-sm font-bold p-3.5 rounded-2xl border-3 border-rose-500 bg-rose-100 text-rose-950 shadow-pop-sm';
+        fb.innerHTML = `
+          <div class="flex items-center gap-1.5 mb-1 text-rose-700 font-jua text-sm">
+            <span>❌</span> <span>앗, 줄임말 새말을 선택하셨어요!</span>
+          </div>
+          <p class="font-normal text-xs sm:text-sm text-slate-800">
+            괄호 안의 긴 문장 첫 글자들을 모아 축약한 단어가 <b>아닌 것</b>을 찾아야 합니다! 다른 보기를 눌러보세요.
+          </p>`;
+      }
+    }
+
+    function checkZ2Q2(idx) {
+      const fb = document.getElementById('z2-q2-feedback');
+      const buttons = document.querySelectorAll('#z2-q2-options button');
+      fb.classList.remove('hidden');
+
+      resetOptionButtons('#z2-q2-options button');
+
+      if (idx === 1) { // 하은
+        playSound('correct');
+        solved.z2q2 = true;
+        buttons[idx].classList.remove('bg-white');
+        buttons[idx].classList.add('btn-correct-burst');
+        fb.className = 'mt-3 text-xs sm:text-sm font-black p-4 rounded-2xl border-4 border-emerald-600 bg-emerald-500 text-white shadow-pop-lg animate-bounce';
+        fb.innerHTML = `
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-2xl">🎉</span>
+            <span class="text-base font-jua text-yellow-200">정답입니다! 가장 슬기로운 태도예요!</span>
+          </div>
+          <p class="font-normal font-sans text-xs sm:text-sm leading-relaxed text-emerald-50">
+            새말의 참신함과 편리함을 즐기되, 듣는 어르신이나 공적인 발표 자리 등 <b>대화 상황과 상대를 배려해 가려 쓰는 균형</b>이 꼭 필요합니다!
+          </p>`;
+        fireMiniConfetti(buttons[idx]);
+        checkZone2Completion();
+      } else {
+        playSound('wrong');
+        solved.z2q2 = false;
+        buttons[idx].classList.remove('bg-white');
+        buttons[idx].classList.add('btn-wrong-shake');
+        fb.className = 'mt-3 text-xs sm:text-sm font-bold p-3.5 rounded-2xl border-3 border-rose-500 bg-rose-100 text-rose-950 shadow-pop-sm';
+        fb.innerHTML = `
+          <div class="flex items-center gap-1.5 mb-1 text-rose-700 font-jua text-sm">
+            <span>❌</span> <span>극단적인 의견은 바람직하지 않아요!</span>
+          </div>
+          <p class="font-normal text-xs sm:text-sm text-slate-800">
+            무조건 남발하거나, 반대로 모든 새말을 전부 법으로 금지하는 태도는 건강한 언어생활이 아닙니다. 배려와 소통의 균형을 말한 친구를 찾아보세요!
+          </p>`;
+      }
+    }
+
+    function checkZ2Q3(idx) {
+      const fb = document.getElementById('z2-q3-feedback');
+      const buttons = document.querySelectorAll('#z2-q3-options button');
+      fb.classList.remove('hidden');
+
+      resetOptionButtons('#z2-q3-options button');
+
+      if (idx === 0) { // 사회 문화 발전
+        playSound('correct');
+        solved.z2q3 = true;
+        buttons[idx].classList.remove('bg-white');
+        buttons[idx].classList.add('btn-correct-burst');
+        fb.className = 'mt-3 text-xs sm:text-sm font-black p-4 rounded-2xl border-4 border-emerald-600 bg-emerald-500 text-white shadow-pop-lg animate-bounce';
+        fb.innerHTML = `
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-2xl">🎉</span>
+            <span class="text-base font-jua text-yellow-200">정답입니다! 언어의 역사성 이해 완료!</span>
+          </div>
+          <p class="font-normal font-sans text-xs sm:text-sm leading-relaxed text-emerald-50">
+            언어는 살아 움직입니다! 사회와 기술이 발전하며 이전에는 없던 새로운 현상, 사물, 직업이 나타나기 때문에 이를 표현할 새말이 끊임없이 생겨납니다.
+          </p>`;
+        fireMiniConfetti(buttons[idx]);
+        checkZone2Completion();
+      } else {
+        playSound('wrong');
+        solved.z2q3 = false;
+        buttons[idx].classList.remove('bg-white');
+        buttons[idx].classList.add('btn-wrong-shake');
+        fb.className = 'mt-3 text-xs sm:text-sm font-bold p-3.5 rounded-2xl border-3 border-rose-500 bg-rose-100 text-rose-950 shadow-pop-sm';
+        fb.innerHTML = `
+          <div class="flex items-center gap-1.5 mb-1 text-rose-700 font-jua text-sm">
+            <span>❌</span> <span>틀렸습니다! 다시 생각해볼까요?</span>
+          </div>
+          <p class="font-normal text-xs sm:text-sm text-slate-800">
+            새말은 기존 순우리말을 없애거나 다른 사람을 따돌리려고 만드는 것이 아닙니다! <b>새로운 사물과 생활 모습이 생겨났기 때문</b>에 만들어집니다.
+          </p>`;
+      }
+    }
+
+    function checkZone2Completion() {
+      if (solved.z2q1 && solved.z2q2 && solved.z2q3) {
+        gameState.keys.zone2 = true;
+        document.getElementById('z2-reward-banner').classList.remove('hidden');
+        confetti({ particleCount: 60, spread: 70, origin: { y: 0.7 } });
+        updateKeyBadges();
+      }
+    }
+
+    // ================= ZONE 3 LOGIC =================
+    function checkZ3Q1(idx) {
+      const fb = document.getElementById('z3-q1-feedback');
+      const buttons = document.querySelectorAll('#z3-q1-options button');
+      fb.classList.remove('hidden');
+
+      resetOptionButtons('#z3-q1-options button');
+
+      if (idx === 1) { // 꿀잼 각... 걍
+        playSound('correct');
+        solved.z3q1 = true;
+        buttons[idx].classList.remove('bg-white');
+        buttons[idx].classList.add('btn-correct-burst');
+        fb.className = 'mt-3 text-xs sm:text-sm font-black p-4 rounded-2xl border-4 border-emerald-600 bg-emerald-500 text-white shadow-pop-lg animate-bounce';
+        fb.innerHTML = `
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-2xl">🎉</span>
+            <span class="text-base font-jua text-yellow-200">정답입니다! 상황 파악 완료!</span>
+          </div>
+          <p class="font-normal font-sans text-xs sm:text-sm leading-relaxed text-emerald-50">
+            선생님과 상의하는 공적인 면담 자리에서 또래 친구끼리 쓰는 은어(‘꿀잼 각’, ‘걍’)를 쓰는 것은 예의에 어긋나며 상황에 전혀 맞지 않습니다!
+          </p>`;
+        fireMiniConfetti(buttons[idx]);
+        checkZone3Completion();
+      } else {
+        playSound('wrong');
+        solved.z3q1 = false;
+        buttons[idx].classList.remove('bg-white');
+        buttons[idx].classList.add('btn-wrong-shake');
+        fb.className = 'mt-3 text-xs sm:text-sm font-bold p-3.5 rounded-2xl border-3 border-rose-500 bg-rose-100 text-rose-950 shadow-pop-sm';
+        fb.innerHTML = `
+          <div class="flex items-center gap-1.5 mb-1 text-rose-700 font-jua text-sm">
+            <span>❌</span> <span>그 보기는 아주 공손하고 바른 표현이에요!</span>
+          </div>
+          <p class="font-normal text-xs sm:text-sm text-slate-800">
+            문제는 공식적인 자리에 <b>‘가장 어색하고 부적절한’</b> 표현을 찾는 것입니다. 또래 은어가 섞인 보기를 찾아보세요!
+          </p>`;
+      }
+    }
+
+    function checkZ3Q2(idx) {
+      const fb = document.getElementById('z3-q2-feedback');
+      const buttons = document.querySelectorAll('#z3-q2-options button');
+      fb.classList.remove('hidden');
+
+      resetOptionButtons('#z3-q2-options button');
+
+      if (idx === 1) { // SNS 매체 어휘
+        playSound('correct');
+        solved.z3q2 = true;
+        buttons[idx].classList.remove('bg-white');
+        buttons[idx].classList.add('btn-correct-burst');
+        fb.className = 'mt-3 text-xs sm:text-sm font-black p-4 rounded-2xl border-4 border-emerald-600 bg-emerald-500 text-white shadow-pop-lg animate-bounce';
+        fb.innerHTML = `
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-2xl">🎉</span>
+            <span class="text-base font-jua text-yellow-200">정답입니다! 어휘 양상 분석 최고!</span>
+          </div>
+          <ul class="text-xs sm:text-sm font-normal text-emerald-50 space-y-0.5 list-disc pl-4">
+            <li>모바일 메신저 줄임말은 빠른 전송과 편의성을 담은 <b>디지털 매체의 어휘</b>입니다.</li>
+            <li>의학 용어는 세대가 아니라 특정 직업의 <b>전문어(분야별 어휘)</b>입니다.</li>
+            <li>전문어는 오해를 방지하기 위해 뜻이 분명하고 명확해야 합니다!</li>
+          </ul>`;
+        fireMiniConfetti(buttons[idx]);
+        checkZone3Completion();
+      } else {
+        playSound('wrong');
+        solved.z3q2 = false;
+        buttons[idx].classList.remove('bg-white');
+        buttons[idx].classList.add('btn-wrong-shake');
+        let hint = '의학 용어는 세대별 어휘가 아니라 <b>직업·학문의 전문어</b>입니다!';
+        if (idx === 2) hint = '어르신과 대화할 때는 서로 이해할 수 있는 쉬운 표준어를 써야 합니다!';
+        if (idx === 3) hint = '전문어는 정확한 의미 전달을 위해 뜻이 모호하면 절대 안 됩니다!';
+        fb.className = 'mt-3 text-xs sm:text-sm font-bold p-3.5 rounded-2xl border-3 border-rose-500 bg-rose-100 text-rose-950 shadow-pop-sm';
+        fb.innerHTML = `
+          <div class="flex items-center gap-1.5 mb-1 text-rose-700 font-jua text-sm">
+            <span>❌</span> <span>틀렸습니다! 힌트를 확인해 보세요.</span>
+          </div>
+          <p class="font-normal text-xs sm:text-sm text-slate-800 leading-tight">${hint}</p>`;
+      }
+    }
+
+    function checkZ3Q3(idx) {
+      const fb = document.getElementById('z3-q3-feedback');
+      const buttons = document.querySelectorAll('#z3-q3-options button');
+      fb.classList.remove('hidden');
+
+      resetOptionButtons('#z3-q3-options button');
+
+      if (idx === 1) { // 쉬운 일상어로 풀어서
+        playSound('correct');
+        solved.z3q3 = true;
+        buttons[idx].classList.remove('bg-white');
+        buttons[idx].classList.add('btn-correct-burst');
+        fb.className = 'mt-3 text-xs sm:text-sm font-black p-4 rounded-2xl border-4 border-emerald-600 bg-emerald-500 text-white shadow-pop-lg animate-bounce';
+        fb.innerHTML = `
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-2xl">🎉</span>
+            <span class="text-base font-jua text-yellow-200">정답입니다! 진정한 소통 전문가!</span>
+          </div>
+          <p class="font-normal font-sans text-xs sm:text-sm leading-relaxed text-emerald-50">
+            전문어는 같은 분야 사람들끼리는 신속하고 정확하지만, 일반 청중이나 환자에게 설명할 때는 <b>듣는 이의 눈높이에 맞춰 친절하고 알기 쉬운 일상어로 풀어서 소통</b>하는 배려가 꼭 필요합니다!
+          </p>`;
+        fireMiniConfetti(buttons[idx]);
+        checkZone3Completion();
+      } else {
+        playSound('wrong');
+        solved.z3q3 = false;
+        buttons[idx].classList.remove('bg-white');
+        buttons[idx].classList.add('btn-wrong-shake');
+        fb.className = 'mt-3 text-xs sm:text-sm font-bold p-3.5 rounded-2xl border-3 border-rose-500 bg-rose-100 text-rose-950 shadow-pop-sm';
+        fb.innerHTML = `
+          <div class="flex items-center gap-1.5 mb-1 text-rose-700 font-jua text-sm">
+            <span>❌</span> <span>틀렸습니다! 배려하는 태도를 골라보세요.</span>
+          </div>
+          <p class="font-normal text-xs sm:text-sm text-slate-800">
+            전문성을 자랑하려고 일부러 어려운 말만 쓰거나, 반대로 필요한 전문어를 다 없애버리는 것은 옳지 않습니다. 상대방의 눈높이에 맞춘 보기를 찾아보세요!
+          </p>`;
+      }
+    }
+
+    function checkZone3Completion() {
+      if (solved.z3q1 && solved.z3q2 && solved.z3q3) {
+        gameState.keys.zone3 = true;
+        document.getElementById('z3-reward-banner').classList.remove('hidden');
+        confetti({ particleCount: 60, spread: 70, origin: { y: 0.7 } });
+        updateKeyBadges();
+      }
+    }
+
+    // ================= VAULT LOGIC =================
+    function unlockTreasure() {
+      const input = document.getElementById('vault-input');
+      const val = input.value.trim().replace(/\s+/g, '');
+      const fb = document.getElementById('vault-feedback');
+      fb.classList.remove('hidden');
+
+      if (!gameState.keys.zone1 || !gameState.keys.zone2 || !gameState.keys.zone3) {
+        playSound('wrong');
+        fb.className = 'mt-4 text-sm font-bold p-3 rounded-2xl border-2 border-slate-900 bg-amber-100 text-amber-950';
+        fb.innerHTML = '⚠️ <b>열쇠가 아직 부족해요!</b> 1~3구역의 퀘스트(각 3문제씩 총 9문제)를 모두 풀어 3개의 열쇠 글자를 먼저 모아보세요!';
+        return;
+      }
+
+      if (val === '단어왕') {
+        playSound('victory');
+        fb.className = 'mt-4 text-sm font-bold p-3 rounded-2xl border-2 border-slate-900 bg-emerald-100 text-emerald-950';
+        fb.innerHTML = '🎉 <b>철컥! 황금 보물 상자가 열렸습니다!</b>';
+
+        confetti({ particleCount: 150, spread: 90, origin: { y: 0.5 } });
+
+        setTimeout(() => {
+          showScreen('screen-victory');
+        }, 1200);
+      } else {
+        playSound('wrong');
+        fb.className = 'mt-4 text-sm font-bold p-3 rounded-2xl border-2 border-slate-900 bg-rose-100 text-rose-950';
+        fb.innerHTML = '❌ <b>비밀 암호가 틀렸습니다!</b><br>1구역(단), 2구역(어), 3구역(왕)에서 얻은 글자를 차례대로 합쳐보세요!';
+      }
+    }
+
+    function resetGame() {
+      playSound('click');
+      gameState.keys.zone1 = false;
+      gameState.keys.zone2 = false;
+      gameState.keys.zone3 = false;
+      Object.keys(solved).forEach(k => solved[k] = false);
+      gameState.timeRemaining = 45 * 60;
+
+      document.querySelectorAll('.z1-q1-btn, .z1-q3-btn, .z2-q1-btn, .z2-q2-btn, .z2-q3-btn, .z3-q1-btn, .z3-q2-btn, .z3-q3-btn').forEach(btn => {
+        btn.className = btn.className.replace(/bg-emerald-200|bg-sky-200|bg-rose-200|bg-amber-100/g, 'bg-white');
+      });
+      document.querySelectorAll('#z1-q1-feedback, #z1-basket-feedback, #z1-q3-feedback, #z2-q1-feedback, #z2-q2-feedback, #z2-q3-feedback, #z3-q1-feedback, #z3-q2-feedback, #z3-q3-feedback, #vault-feedback').forEach(el => {
+        el.classList.add('hidden');
+      });
+      document.querySelectorAll('#z1-reward-banner, #z2-reward-banner, #z3-reward-banner').forEach(el => {
+        el.classList.add('hidden');
+      });
+
+      resetZ1Baskets();
+      updateKeyBadges();
+      document.getElementById('vault-input').value = '';
+      showScreen('screen-intro');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      updateTimerDisplay();
+      updateKeyBadges();
+    });
+  </script>
+</body>
+</html>
